@@ -4,10 +4,11 @@ import { Persons } from "./Persons";
 import { Filter } from "./Filter";
 import { PersonForm } from "./PersonForm";
 import { Notification } from "./Notification";
-import personService from './services/persons'
+import personService from "./services/persons";
 
 const App = () => {
-  const baseUrl = "http://localhost:3001/persons";
+  const baseUrl = "/api/persons";
+  const [loading, setLoading] = useState(false);
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newPhoneNumber, setNewPhoneNumber] = useState("");
@@ -17,17 +18,19 @@ const App = () => {
   useEffect(() => {
     axios.get(baseUrl).then((response) => {
       setPersons(response.data);
+      setLoading(false);
     });
-  }, [persons]);
+  }, [loading]);
 
   const deletePerson = (id, name) => {
-    if(window.confirm(`Delete ${name} ?`)) {
-      personService.deletePerson(id)
-      setPersons(persons.splice(id-1, 1))
-      return
+    if (window.confirm(`Delete ${name} ?`)) {
+      personService.deletePerson(id);
+      setPersons(persons.splice(id - 1, 1));
+      setLoading(true);
+      return;
     }
-    console.log('no clicked')
-  }
+    console.log("no clicked");
+  };
 
   const isDuplicate = (persons, name) => {
     const data = persons.filter((person) => person.name === name);
@@ -44,16 +47,17 @@ const App = () => {
       alert(`${newName} is already added to phonebook`);
       return resetInputValue();
     }
-    personService.create({ name: newName, number: newPhoneNumber })
+    personService.create({ name: newName, number: newPhoneNumber });
     setPersons([...persons, { name: newName, number: newPhoneNumber }]);
-    setSuccessMessage(`Added ${newName}`)
-    setTimeout(() => setSuccessMessage(''), 2000)
+    setLoading(true);
+    setSuccessMessage(`Added ${newName}`);
+    setTimeout(() => setSuccessMessage(""), 2000);
     resetInputValue();
   };
   return (
     <div>
       <h2>Phonebook</h2>
-      {successMessage ? <Notification message={successMessage}/> : null}
+      {successMessage ? <Notification message={successMessage} /> : null}
       <Filter filterValue={filterValue} setFilterValue={setFilterValue} />
       <PersonForm
         addPerson={addPerson}
@@ -63,7 +67,11 @@ const App = () => {
         setNewPhoneNumber={setNewPhoneNumber}
       />
       <h2>Numbers</h2>
-      <Persons persons={persons} filterValue={filterValue} deletePerson={deletePerson}/>
+      <Persons
+        persons={persons}
+        filterValue={filterValue}
+        deletePerson={deletePerson}
+      />
     </div>
   );
 };
